@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t['study_session'] }}{% endblock %}
+
+{% block content %}
+    <div class="container" style="text-align: center;">
+        <nav style="margin-bottom: 20px; text-align: left;">
+            <a href="/">{{ t['back_dashboard'] }}</a>
+        </nav>
+
+        <h2>{{ t['study_session'] }}: {{ current_subject if current_subject else t['all_subjects'] }}</h2>
+
+        <div class="flashcard">
+            <small style="color: #999;">{{ t['card_question'] }}</small>
+            <h2 style="font-size: 1.8em; margin-top: 10px;">{{ card.question }}</h2>
+            
+            <div id="answer-section" style="display: none; margin-top: 30px; padding-top: 20px; border-top: 1px dashed #ddd;">
+                <small style="color: #999;">{{ t['card_answer'] }}</small>
+                <h3 style="color: var(--primary); font-size: 1.5em;">{{ card.answer }}</h3>
+                
+                <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
+                    <a href="/rate/{{ card.id }}/hard"><button class="danger">{{ t['btn_hard'] }}</button></a>
+                    <a href="/rate/{{ card.id }}/easy"><button class="success">{{ t['btn_easy'] }}</button></a>
+                </div>
+            </div>
+        </div>
+
+        <button id="show-btn" onclick="showAnswer()" style="width: 200px; padding: 15px;">{{ t['btn_show'] }}</button>
+    </div>
+
+    <script>
+        function showAnswer() {
+            document.getElementById('answer-section').style.display = 'block';
+            document.getElementById('show-btn').style.display = 'none';
+        }
+    </script>
+{% endblock %}

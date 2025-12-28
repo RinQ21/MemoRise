@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t['dashboard'] }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1 style="margin:0;">{{ t['brain_deck'] }}</h1>
+            <div>
+                <span>{{ t['hello'] }}, <b>{{ user.username }}</b></span>
+                <a href="/profile" style="margin-left: 15px;">{{ t['profile'] }} 📊</a>
+            </div>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; gap: 20px; align-items: center;">
+            <a href="/add"><button>{{ t['add_card_btn'] }}</button></a>
+            
+            <div style="border-left: 1px solid #ddd; padding-left: 20px;">
+                <form action="/upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+                    <small>{{ t['upload_label'] }}</small>
+                    <input type="file" name="file" accept=".csv" required style="width: auto; margin:0; padding: 5px;">
+                    <button type="submit" class="secondary">{{ t['upload_btn'] }}</button>
+                </form>
+            </div>
+        </div>
+
+        <br>
+
+        <h3>{{ t['study_section'] }}</h3>
+        {% if subjects|length == 0 %}
+            <p>{{ t['no_cards'] }}</p>
+        {% else %}
+            <div class="card-container">
+                {% for subject, stats in subjects.items() %}
+                <div class="card-box">
+                    <h2 style="color: var(--primary);">{{ subject }}</h2>
+                    <p style="color: #666;">{{ t['total_cards'] }} {{ stats.total }}</p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                    
+                    {% if stats.due > 0 %}
+                        <p style="color: var(--danger); font-weight: bold;">{{ stats.due }} {{ t['due_now'] }}</p>
+                        <a href="/study/{{ subject }}"><button>{{ t['start_session'] }}</button></a>
+                    {% else %}
+                        <p style="color: var(--success);">{{ t['all_caught_up'] }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <br><hr><br>
+
+        <h3>{{ t['manage_section'] }}</h3>
+        
+        <form id="bulkForm" action="/delete_bulk" method="POST">
+            <button type="button" onclick="confirmBulkDelete()" class="danger" style="margin-bottom: 10px;">
+                {{ t['btn_delete_selected'] }}
+            </button>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" onclick="toggleAll(this)">
+                        </th>
+                        <th>{{ t['tbl_subject'] }}</th>
+                        <th>{{ t['tbl_question'] }}</th>
+                        <th>{{ t['tbl_answer'] }}</th>
+                        <th>{{ t['tbl_actions'] }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for card in all_cards %}
+                    <tr>
+                        <td style="text-align: center;">
+                            <input type="checkbox" name="card_ids" value="{{ card.id }}">
+                        </td>
+                        <td><span style="background: #eef4fc; color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 0.9em;">{{ card.subject }}</span></td>
+                        <td>{{ card.question }}</td>
+                        
+                        <td>
+                            <details>
+                                <summary style="cursor: pointer; color: #888; font-size: 0.9em;">{{ t['lbl_show_answer'] }}</summary>
+                                <span style="color: #333; display: block; margin-top: 5px;">{{ card.answer }}</span>
+                            </details>
+                        </td>
+
+                        <td>
+                            <a href="/edit/{{ card.id }}">✏️</a> &nbsp;
+                            <a href="/delete/{{ card.id }}" style="color: var(--danger);">✖</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="margin-top: 0; color: var(--danger);">⚠ {{ t['btn_delete_selected'] }}</h3>
+            <p>{{ t['confirm_bulk'] }}</p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="closeModal()" class="secondary">{{ t['btn_cancel'] }}</button>
+                <button onclick="submitForm()" class="danger">{{ t['btn_yes_delete'] }}</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-box {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <script>
+    function toggleAll(source) {
+        var checkboxes = document.querySelectorAll('input[name="card_ids"]');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+    }
+
+    function confirmBulkDelete() {
+        var checkboxes = document.querySelectorAll('input[name="card_ids"]:checked');
+        if (checkboxes.length === 0) {
+            return;
+        }
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('customModal').style.display = 'none';
+    }
+
+    function submitForm() {
+        document.getElementById('bulkForm').submit();
+    }
+    </script>
+{% endblock %}

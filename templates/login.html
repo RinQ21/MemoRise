@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t['login_btn'] }}{% endblock %}
+
+{% block head %}
+<style>
+    body { display: flex; justify-content: center; align-items: center; height: 100vh; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="card-box" style="width: 350px; text-align: center;">
+        <h1 style="color: var(--primary);">{{ t['login_title'] }}</h1>
+        <p style="color: #666; margin-bottom: 20px;">{{ t['login_desc'] }}</p>
+        
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" style="width: 100%;">{{ t['login_btn'] }}</button>
+        </form>
+        
+        <div style="margin-top: 20px; font-size: 0.9em;">
+            <p>{{ t['no_account'] }}</p>
+            <a href="/register" style="font-weight: bold;">{{ t['create_one'] }}</a>
+        </div>
+    </div>
+{% endblock %}
